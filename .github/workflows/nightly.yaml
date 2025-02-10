@@ -14,13 +14,12 @@ jobs:
           - os-name: macOS-x86_64
             runs-on: macOS-latest
             target: x86_64-apple-darwin
-
-          # more targets here ...
-
+          # Add more targets here as needed.
     runs-on: ${{ matrix.platform.runs-on }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v1
         with:
@@ -28,8 +27,21 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: "--locked --release"
           strip: true
+
       - name: Publish artifacts and release
+        id: create_release
         uses: houseabsolute/actions-rust-release@v0
         with:
           executable-name: LPU-Wireless-Autologin
           target: ${{ matrix.platform.target }}
+          # Check the action’s docs if you can set `draft: false` or similar options
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./target/${{ matrix.platform.target }}/release/LPU-Wireless-Autologin
+          asset_name: LPU-Wireless-Autologin-${{ matrix.platform.target }}
+          asset_content_type: application/octet-stream
